@@ -1,0 +1,45 @@
+### 1) Users
+- http://localhost:3000/users/
+- http://localhost:3000/users/?place=5e04bb8eb10d6b3492638aae
+
+- post body 
+{
+	"name": "ilya",
+	"type": "super",
+	"password": "ilya",
+	"login": "ilya",
+	"placeId": "3331234234234"
+}
+
+### 2) Places
+- http://localhost:3000/places
+
+-post body
+
+{
+	"name": "Точка 2",
+	"adress": "Малиновка"
+}
+
+### 3) Ingredients
+
+- http://localhost:3000/ingredients/
+
+- post body 
+{
+	"name": "лаваш",
+	"price": 5
+}
+
+### 4) Orders
+- http://localhost:3000/orders
+- http://localhost:3000/orders/?place=5e04bb8eb10d6b3492638aae&status=todo
+
+- post body 
+{
+	"place": "5e04bb95b10d6b3492638aaf",
+	"kebabs": [
+		{ "ingredients": ["5e04773e2894674b2ae74fe4", "5e04776d2894674b2ae74fe5"] }],
+	"phone": "222222222",
+	"customerName": "Ilya"
+}
