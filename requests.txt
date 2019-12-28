@@ -43,3 +43,6 @@
 	"phone": "222222222",
 	"customerName": "Ilya"
 }
+
+### 5) kebabs
+- http://localhost:3000/kebabs/

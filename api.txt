@@ -1,0 +1,21 @@
+1) Site
+
+- Places
+  - http://localhost:3000/places
+
+- Default kebabs
+  - http://localhost:3000/kebabs/
+
+- Make order
+  - Post 
+    - http://localhost:3000/orders
+      {
+        "place": "5e04bb95b10d6b3492638aaf",
+        "kebabs": [
+          { "ingredients": ["5e04773e2894674b2ae74fe4", "5e04776d2894674b2ae74fe5"] }],
+        "phone": "222222222",
+        "customerName": "Ilya"
+      }
+
+
+2) Admin

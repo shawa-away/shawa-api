@@ -1,52 +1,45 @@
 var express = require('express');
-const mongoose = require('mongoose');
 var router = express.Router();
-const User = require('./../models/user');
+const Kebab = require('./../models/kebab');
 
-/* GET users listing. */
 router.get('/', function (req, res, next) {
-  const { place } = req.query;
-  const query = {};
-
-  if (place) query.place = place;
-
-  User
-    .find(query)
-    .populate('place')
-    .exec((err, users) => {
+  Kebab
+    .find({})
+    .populate('ingredients')
+    .exec((err, kebabs) => {
       if (err) return next(err)
 
-      res.json(users)
+      res.json(kebabs);
     })
 });
 
 router.post('/', (req, res, next) => {
   const { body } = req;
 
-  const user = new User(body);
+  const kebab = new Kebab(body)
 
-  user.save((err, user) => {
+  kebab.save((err, kebab) => {
     if (err) return next(err)
 
-    res.json(user);
+    res.json(kebab);
   })
-})
+});
 
 router.put('/:id', (req, res, next) => {
   const { body, params } = req;
   const { id } = params;
 
-  User.findByIdAndUpdate(id, body, { new: true }, (err, user) => {
+  Kebab.findByIdAndUpdate(id, body, { new: true }, (err, kebab) => {
     if (err) return next(err)
 
-    res.json(user);
+    res.json(kebab);
   })
 });
 
 router.delete('/:id', (req, res, next) => {
   const { id } = req.params;
 
-  User.findByIdAndDelete(id, (err) => {
+  Kebab.findByIdAndDelete(id, (err) => {
     if (err) return next(err)
 
     res.json({

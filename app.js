@@ -10,8 +10,9 @@ var usersRouter = require('./routes/users');
 var placesRouter = require('./routes/places');
 const ingredientsRouter = require('./routes/ingredients');
 const orderRouter = require('./routes/orders');
+const kebabRouter = require('./routes/kebabs');
 
-mongoose.connect('mongodb://localhost/sha-api', { useUnifiedTopology: true, useNewUrlParser: true });
+mongoose.connect('mongodb://localhost/sha-api', { useUnifiedTopology: true, useNewUrlParser: true, useFindAndModify: false });
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', function () {
@@ -36,8 +37,7 @@ app.use('/users', usersRouter);
 app.use('/places', placesRouter);
 app.use('/ingredients', ingredientsRouter);
 app.use('/orders', orderRouter);
-
-
+app.use('/kebabs', kebabRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
@@ -50,9 +50,11 @@ app.use(function (err, req, res, next) {
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
 
+  console.log(err)
+
   // render the error page
   res.status(err.status || 500);
-  res.render('error');
+  res.send(err);
 });
 
 

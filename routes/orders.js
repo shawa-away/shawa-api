@@ -1,7 +1,7 @@
 var express = require('express');
 var router = express.Router();
 const mongoose = require('mongoose');
-const Order = require('./../models/order');
+const { Order, ORDER_STATUS } = require('./../models/order');
 const Ingredient = require('../models/ingredient');
 
 router.get('/', function (req, res, next) {
@@ -13,16 +13,39 @@ router.get('/', function (req, res, next) {
 
   Order
     .find(query)
-    .populate('place')
-    .populate('kebabs.ingredients')
-    .populate('cook')
+    // .populate('place')
+    // .populate('kebabs.ingredients')
+    // .populate('cook')
     .exec((err, orders) => {
-      if (err) {
-        res.status(500).json({ error: true, message: 'Something wrong' });
-      }
+      if (err) return next(err)
 
       res.json(orders)
     })
+});
+
+router.get('/next', function (req, res, next) {
+  const { place } = req.query;
+
+  if (!place) {
+    return next({
+      status: 400,
+      error: true,
+      message: 'Place should be defined'
+    });
+  }
+
+  Order
+    .find({ place, status: ORDER_STATUS.TODO })
+    .populate('place')
+    .populate('kebabs.ingredients')
+    .exec(function (err, orders) {
+      if (err) return next(err);
+
+      const sortedOrders = orders.slice().sort((a, b) => a.time - b.time);
+      const nextOrder = sortedOrders.length ? sortedOrders[0] : {};
+
+      res.json(nextOrder);
+    });
 });
 
 router.get('/:id', function (req, res, next) {
@@ -34,9 +57,7 @@ router.get('/:id', function (req, res, next) {
     .populate('kebabs.ingredients')
     .populate('cook')
     .exec((err, order) => {
-      if (err) {
-        res.status(500).json({ error: true, message: 'Something wrong' });
-      }
+      if (err) return next(err)
 
       res.json(order)
     })
@@ -65,28 +86,32 @@ router.post('/', (req, res, next) => {
       price + kebabIngredients.reduce((sum, ingredientsObj) => sum + ingredientsObj.price, 0),
       0)
 
-    const order = new Order({ ...body, price, status: 'todo' });
+    const order = new Order({ ...body, price, status: ORDER_STATUS.TODO });
 
     order.save((err, order) => {
-      if (err) {
-        res.status(500).send(err);
-      }
+      if (err) return next(err)
+
       res.json(order);
     })
   })
 })
 
-// NEXT STATUS ROUTER
 router.put('/:id', (req, res, next) => {
   const { body, params } = req;
   const { id } = params;
 
-  Order.findByIdAndUpdate(id, body, { new: true, runValidators: true }, (err, order) => {
-    if (err) {
-      res.status(500).send(err);
+  Order.findById(id, (err, order) => {
+    if (err) return next(err)
+
+    for (key in body) {
+      order[key] = body[key];
     }
 
-    res.json(order);
+    order.save((err, order) => {
+      if (err) return next(err)
+
+      res.json(order);
+    })
   })
 });
 
@@ -94,9 +119,7 @@ router.delete('/:id', (req, res, next) => {
   const { id } = req.params;
 
   Order.findByIdAndDelete(id, (err) => {
-    if (err) {
-      res.status(500).send(err);
-    }
+    if (err) return next(err)
 
     res.json({
       success: true

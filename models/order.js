@@ -1,9 +1,20 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
+const ValidationError = mongoose.Error.ValidationError;
+const ValidatorError = mongoose.Error.ValidatorError;
+
+const ORDER_STATUS = {
+  TODO: 'todo',
+  IN_PROGRESS: 'inprogress',
+  DONE: 'done',
+  FINISHED: 'finished',
+}
+
 const orderSchema = new Schema({
   time: {
-    type: String
+    type: Date,
+    required: true
   },
   place: { type: mongoose.Schema.Types.ObjectId, ref: 'Place', required: true },
   kebabs: [{ ingredients: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Ingredient', required: true }] }],
@@ -17,11 +28,11 @@ const orderSchema = new Schema({
   },
   price: {
     type: Number,
-    // required: true,
+    required: true,
   },
   status: {
     type: String,
-    enum: ['todo', 'inprogress', 'done', 'delivered'],
+    enum: [ORDER_STATUS.TODO, ORDER_STATUS.IN_PROGRESS, ORDER_STATUS.DONE, ORDER_STATUS.FINISHED],
     required: true,
   },
   cook: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
@@ -31,6 +42,25 @@ const orderSchema = new Schema({
   comments: String
 }, { timestamps: true });
 
+orderSchema.pre('save', function (next) {
+  if (this.status !== ORDER_STATUS.TODO && !this.cook) {
+    const error = new ValidationError(this);
+    error.errors.cook = new ValidatorError({
+      path: 'cook',
+      message: 'Cook may be empty only in TODO status',
+      type: 'notvalid',
+      value: this.cook
+    });
+
+    return next(error);
+  }
+
+  next();
+})
+
 const Order = mongoose.model('Order', orderSchema);
 
-module.exports = Order;
+module.exports = {
+  Order,
+  ORDER_STATUS
+};
