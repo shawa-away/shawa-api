@@ -1,9 +1,13 @@
-const express = require('express');
+const { GraphQLServer } = require('graphql-yoga');
+const resolvers = require('./graphql/resolvers');
 
 const loaders = require('./loaders');
 
-const app = express();
+const server = new GraphQLServer({
+  typeDefs: 'graphql/schema.graphql',
+  resolvers
+});
 
-loaders.init(app);
+loaders.init(server.express);
 
-module.exports = app;
+module.exports = server;
