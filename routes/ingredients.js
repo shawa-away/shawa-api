@@ -1,48 +1,40 @@
 var express = require('express');
 var router = express.Router();
-const Ingredient = require('../models/ingredient');
+const IngredientService = require('../services/ingredients');
 
 router.get('/', (req, res, next) => {
-  Ingredient.find({}, (err, ingredients) => {
-    if (err) return next(err)
-
-    res.json(ingredients)
-  })
+  IngredientService
+    .search()
+    .then(ingredients => res.json(ingredients))
+    .catch(err => next(err));
 });
 
 router.post('/', (req, res, next) => {
   const { body } = req;
 
-  const ingredient = new Ingredient(body)
-
-  ingredient.save((err, ingredient) => {
-    if (err) return next(err)
-
-    res.json(ingredient);
-  })
+  IngredientService
+    .create(body)
+    .then(ingredients => res.json(ingredients))
+    .catch(err => next(err));
 });
 
 router.put('/:id', (req, res, next) => {
   const { body, params } = req;
   const { id } = params;
 
-  Ingredient.findByIdAndUpdate(id, body, { new: true }, (err, ingredient) => {
-    if (err) return next(err)
-
-    res.json(ingredient);
-  })
+  IngredientService
+    .update(id, body)
+    .then(ingredients => res.json(ingredients))
+    .catch(err => next(err));
 });
 
 router.delete('/:id', (req, res, next) => {
   const { id } = req.params;
 
-  Ingredient.findByIdAndDelete(id, (err) => {
-    if (err) return next(err)
-
-    res.json({
-      success: true
-    })
-  })
+  IngredientService
+    .remove(id)
+    .then(() => res.json({}))
+    .catch(err => next(err));
 });
 
 module.exports = router;

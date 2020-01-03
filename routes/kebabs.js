@@ -1,51 +1,40 @@
 var express = require('express');
 var router = express.Router();
-const Kebab = require('./../models/kebab');
+const KebabService = require('../services/kebabs');
 
 router.get('/', function (req, res, next) {
-  Kebab
-    .find({})
-    .populate('ingredients')
-    .exec((err, kebabs) => {
-      if (err) return next(err)
-
-      res.json(kebabs);
-    })
+  KebabService
+    .search()
+    .then(kebabs => res.json(kebabs))
+    .catch(err => next(err));
 });
 
 router.post('/', (req, res, next) => {
   const { body } = req;
 
-  const kebab = new Kebab(body)
-
-  kebab.save((err, kebab) => {
-    if (err) return next(err)
-
-    res.json(kebab);
-  })
+  KebabService
+    .create(body)
+    .then(kebab => res.json(kebab))
+    .catch(err => next(err));
 });
 
 router.put('/:id', (req, res, next) => {
   const { body, params } = req;
   const { id } = params;
 
-  Kebab.findByIdAndUpdate(id, body, { new: true }, (err, kebab) => {
-    if (err) return next(err)
-
-    res.json(kebab);
-  })
+  KebabService
+    .update(id, body)
+    .then(kebab => res.json(kebab))
+    .catch(err => next(err));
 });
 
 router.delete('/:id', (req, res, next) => {
   const { id } = req.params;
 
-  Kebab.findByIdAndDelete(id, (err) => {
-    if (err) return next(err)
-
-    res.json({
-      success: true
-    })
-  })
+  KebabService
+    .remove(id)
+    .then(() => res.json({}))
+    .catch(err => next(err));
 });
 
 module.exports = router;

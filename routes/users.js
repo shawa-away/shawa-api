@@ -1,7 +1,6 @@
-var express = require('express');
-const mongoose = require('mongoose');
-var router = express.Router();
-const User = require('./../models/user');
+const express = require('express');
+const router = express.Router();
+const UserService = require('./../services/users')
 
 /* GET users listing. */
 router.get('/', function (req, res, next) {
@@ -10,49 +9,38 @@ router.get('/', function (req, res, next) {
 
   if (place) query.place = place;
 
-  User
-    .find(query)
-    .populate('place')
-    .exec((err, users) => {
-      if (err) return next(err)
-
-      res.json(users)
-    })
+  UserService
+    .search(query)
+    .then(users => res.json(users))
+    .catch(err => next(err));
 });
 
 router.post('/', (req, res, next) => {
   const { body } = req;
 
-  const user = new User(body);
-
-  user.save((err, user) => {
-    if (err) return next(err)
-
-    res.json(user);
-  })
+  UserService
+    .create(body)
+    .then(user => res.json(user))
+    .catch(err => next(err));
 })
 
 router.put('/:id', (req, res, next) => {
   const { body, params } = req;
   const { id } = params;
 
-  User.findByIdAndUpdate(id, body, { new: true }, (err, user) => {
-    if (err) return next(err)
-
-    res.json(user);
-  })
+  UserService
+    .update(id, body)
+    .then(user => res.json(user))
+    .catch(err => next(err));
 });
 
 router.delete('/:id', (req, res, next) => {
   const { id } = req.params;
 
-  User.findByIdAndDelete(id, (err) => {
-    if (err) return next(err)
-
-    res.json({
-      success: true
-    })
-  })
+  UserService
+    .remove(id)
+    .then(() => res.json({}))
+    .catch(err => next(err));
 });
 
 module.exports = router;
