@@ -28,10 +28,10 @@ const ingredientService = {
   }),
 
   remove: (id) => new Promise((resolve, reject) => {
-    Ingredient.findByIdAndDelete(id, (err) => {
+    Ingredient.findByIdAndDelete(id, (err, ingredient) => {
       if (err) reject(err);
 
-      resolve();
+      resolve(ingredient);
     })
   })
 }

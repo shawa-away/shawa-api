@@ -1,11 +1,20 @@
 type Query {
-  hello(name: String): String!
+  ingredients: [Ingredient!]
 }
 
 type Mutation {
-  createUser(name: String): String!
+  createIngredient(input: IngredientInput): Ingredient
+  updateIngredient(id: ID!, input: IngredientInput): Ingredient
+  removeIngredient(id: ID!): Ingredient
 }
 
-type User {
-  name: String!
+input IngredientInput {
+  name: String
+  price: Int
+}
+
+type Ingredient {
+  _id: String
+  name: String
+  price: Int
 }
