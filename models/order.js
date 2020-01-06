@@ -44,13 +44,16 @@ const orderSchema = new Schema({
 
 orderSchema.pre('save', function (next) {
   if (this.status !== ORDER_STATUS.TODO && !this.cook) {
-    const error = new ValidationError(this);
-    error.errors.cook = new ValidatorError({
-      path: 'cook',
-      message: 'Cook may be empty only in TODO status',
-      type: 'notvalid',
-      value: this.cook
-    });
+    // const error = new ValidationError(this);
+    // error.errors.cook = new ValidatorError({
+    //   path: 'cook',
+    //   message: 'Cook may be empty only in TODO status',
+    //   type: 'notvalid',
+    //   value: this.cook
+    // });
+
+    // console.log(error)
+    const error = new Error('Cook may be empty only in TODO status')
 
     return next(error);
   }

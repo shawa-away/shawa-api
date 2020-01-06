@@ -6,12 +6,12 @@ const emptySort = data => data;
 
 const ordersService = {
   search: (params = {}, isPopulated = false, sortFn = emptySort) => new Promise((resolve, reject) => {
-    const { status, place, user, id } = params;
+    const { status, place, user, id, _id } = params;
     let query = {};
     if (status) query.status = status;
     if (place) query.place = place;
     if (user) query.user = user;
-    if (id) query._id = id;
+    if (id || _id) query._id = id || _id;
 
     Order
       .find(query)
@@ -19,20 +19,22 @@ const ordersService = {
       .populate(isPopulated ? 'kebabs.ingredients' : null)
       .populate(isPopulated ? 'cook' : null)
       .exec((err, orders) => {
-        if (err) reject(err);
+        if (err) return reject(err);
 
-        resolve(emptySort(orders))
+        resolve(sortFn(orders))
       });
   }),
 
   create: (data) => new Promise((resolve, reject) => {
+    if (!data.kebabs || !data.kebabs.length) return reject(new Error('missing Data'))
+
     const promises = data.kebabs.map(kebab => {
       return new Promise((resolve, reject) => {
         Ingredient.find({
           "_id": { $in: kebab.ingredients.map(ingredientId => mongoose.Types.ObjectId(ingredientId)) }
         }, (err, ingredients) => {
           if (err) {
-            reject(err);
+            return reject(err);
           }
 
           resolve(ingredients)
@@ -48,34 +50,34 @@ const ordersService = {
       const order = new Order({ ...data, price, status: ORDER_STATUS.TODO });
 
       order.save((err, order) => {
-        if (err) reject(err)
+        if (err) return reject(err)
 
-        resolve(order);
+        order.populate('place kebabs.ingredients cook', (err, order) => resolve(order));
       })
     })
   }),
 
   update: (id, data) => new Promise((resolve, reject) => {
     Order.findById(id, (err, order) => {
-      if (err) reject(err)
+      if (err) return reject(err)
 
       for (key in data) {
         order[key] = data[key];
       }
 
       order.save((err, order) => {
-        if (err) reject(err)
+        if (err) return reject(err)
 
-        resolve(order);
+        order.populate('place kebabs.ingredients cook', (err, order) => resolve(order));
       })
     })
   }),
 
   remove: (id) => new Promise((resolve, reject) => {
-    Order.findByIdAndDelete(id, (err) => {
-      if (err) reject(err);
+    Order.findByIdAndDelete(id, (err, order) => {
+      if (err) return reject(err);
 
-      resolve();
+      resolve(order);
     })
   })
 }

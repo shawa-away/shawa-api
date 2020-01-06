@@ -1,12 +1,31 @@
 type Query {
-  ingredients: [Ingredient!]
+  ingredients: [Ingredient]
+  places: [Place]
+  users(_id: ID): [User]
+  orders(_id: ID, place: String, status: OrderType, cook: String): [Order]
+  nextOrder(place: String): Order
 }
 
 type Mutation {
+  # Ingredients
   createIngredient(input: IngredientInput): Ingredient
   updateIngredient(id: ID!, input: IngredientInput): Ingredient
   removeIngredient(id: ID!): Ingredient
+  # Places
+  createPlace(input: PlaceInput): Place
+  updatePlace(id: ID!, input: PlaceInput): Place
+  removePlace(id: ID!): Place
+  # Users
+  createUser(input: UserInput): User
+  updateUser(id: ID!, input: UserInput): User
+  removeUser(id: ID!): User
+  # Orders
+  createOrder(input: OrderInput): Order
+  updateOrder(id: ID!, input: OrderInput): Order
+  removeOrder(id: ID!): Order
 }
+
+scalar Date
 
 input IngredientInput {
   name: String
@@ -14,7 +33,81 @@ input IngredientInput {
 }
 
 type Ingredient {
-  _id: String
+  _id: String!
+  name: String!
+  price: Int!
+}
+
+input PlaceInput {
   name: String
-  price: Int
+  adress: String
+}
+
+type Place {
+  _id: String
+  name: String!
+  adress: String!
+}
+
+enum UserType {
+  COOK
+  ADMIN
+  SUPER
+}
+
+enum OrderType {
+  TODO
+  IN_PROGRESS
+  DONE
+  FINISHED
+}
+
+input UserInput {
+  name: String
+  type: UserType
+  password: String
+  login: String
+  place: String
+}
+
+type User {
+  _id: String!
+  name: String!
+  type: UserType!
+  password: String!
+  login: String!
+  place: Place
+}
+
+input OrderInput {
+  time: String
+  place: String
+  kebabs: [KebabInput]
+  status: OrderType
+  cook: String
+  phone: String
+  customerName: String
+  comments: String
+}
+
+type Order {
+  _id: String!
+  time: Date!
+  place: Place!
+  kebabs: [Kebab!]
+  phone: String!
+  customerName: String!
+  comments: String
+  doneTime: String
+  status: OrderType
+  cook: User
+  price: Float!
+}
+
+input KebabInput {
+  ingredients: [String!]!
+}
+
+type Kebab {
+  ingredients: [Ingredient!]
 }

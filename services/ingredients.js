@@ -3,7 +3,7 @@ const Ingredient = require('../models/ingredient');
 const ingredientService = {
   search: (params = {}) => new Promise((resolve, reject) => {
     Ingredient.find(params, (err, ingredients) => {
-      if (err) reject(err);
+      if (err) return reject(err);
 
       resolve(ingredients)
     });
@@ -13,7 +13,7 @@ const ingredientService = {
     const ingredient = new Ingredient(data);
 
     ingredient.save((err, ingredient) => {
-      if (err) reject(err);
+      if (err) return reject(err);
 
       resolve(ingredient);
     })
@@ -21,7 +21,7 @@ const ingredientService = {
 
   update: (id, data) => new Promise((resolve, reject) => {
     Ingredient.findByIdAndUpdate(id, data, { new: true }, (err, ingredient) => {
-      if (err) reject(err);
+      if (err) return reject(err);
 
       resolve(ingredient);
     })
@@ -29,7 +29,7 @@ const ingredientService = {
 
   remove: (id) => new Promise((resolve, reject) => {
     Ingredient.findByIdAndDelete(id, (err, ingredient) => {
-      if (err) reject(err);
+      if (err) return reject(err);
 
       resolve(ingredient);
     })

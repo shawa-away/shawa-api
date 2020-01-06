@@ -5,7 +5,7 @@ const placeService = {
     Place
       .find(query)
       .exec((err, places) => {
-        if (err) reject(err);
+        if (err) return reject(err);
 
         resolve(places)
       });
@@ -15,7 +15,7 @@ const placeService = {
     const place = new Place(data);
 
     place.save((err, place) => {
-      if (err) reject(err);
+      if (err) return reject(err);
 
       resolve(place);
     })
@@ -23,17 +23,17 @@ const placeService = {
 
   update: (id, data) => new Promise((resolve, reject) => {
     Place.findByIdAndUpdate(id, data, { new: true }, (err, place) => {
-      if (err) reject(err);
+      if (err) return reject(err);
 
       resolve(place);
     })
   }),
 
   remove: (id) => new Promise((resolve, reject) => {
-    Place.findByIdAndDelete(id, (err) => {
-      if (err) reject(err);
+    Place.findByIdAndDelete(id, (err, place) => {
+      if (err) return reject(err);
 
-      resolve();
+      resolve(place);
     })
   })
 }

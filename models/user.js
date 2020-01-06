@@ -18,6 +18,7 @@ const userSchema = new Schema({
   login: {
     type: String,
     required: true,
+    // TODO: add uniq fields only
   },
   place: { type: mongoose.Schema.Types.ObjectId, ref: 'Place', required: true }
 });
