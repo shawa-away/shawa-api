@@ -1,43 +1,56 @@
-const mongoose = require('mongoose');
-const {MongoClient} = require('mongodb');
 const IngredientService = require('./ingredients');
+const Ingredient = require('../models/ingredient');
+const DBTestHelper = require('./../tests/helpers/connection');
 
 const mockIngredient = { name: 'roll', price: 5 };
 
 describe('Ingredients service', () => {
-  let connection;
-  let db;
-  beforeAll(async () => {
-    // console.log(global.__MONGO_URI__)
-    // connection = await MongoClient.connect(global.__MONGO_URI__, {
-    //   useNewUrlParser: true,
-    // });
-    // db = await connection.db(global.__MONGO_DB_NAME__);
-    console.log(process.env.MONGO_URL)
-      connection = await MongoClient.connect(process.env.MONGO_URL, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true
-      });
-      db = await connection.db();
+  beforeAll(DBTestHelper.connect);
+
+  afterAll(DBTestHelper.disconnect)
+
+  beforeEach(async () => {
+    await Ingredient.deleteMany({}).exec();
   });
 
-  afterAll(async () => {
-    await connection.close();
+  test('should create Ingredient and store it in DB', async () => {
+    const item = await IngredientService.create(mockIngredient);
+    const storedItem = await Ingredient.findById(item.id).exec();
+
+    expect(storedItem).not.toBeNull();
+
   });
 
-  test('should create Ingredient and store it in DB', async (done) => {
-    console.log(123)
-    try {
+  test('should update Ingredient and store it in DB', async () => {
+    const item = await IngredientService.create(mockIngredient);
+    const newName = 'roll2';
 
-      const a = await IngredientService.create(mockIngredient);
-      console.log(a);
+    await IngredientService.update(item.id, { name: newName })
 
-    const data = db.collection('ingredients');
-    console.log(data.find())
-    done()
-    } catch(err) {
-      console.log('err', err)
-    }
-    
+    const updatedItem = await Ingredient.findById(item.id).exec();
+
+    expect(updatedItem.name).toBe(newName);
+  });
+
+  test('should remove Ingredient from DB', async () => {
+    const item = await IngredientService.create(mockIngredient);
+    let storedItem = await Ingredient.findById(item.id).exec();
+
+    expect(storedItem).not.toBeNull();
+
+    await IngredientService.remove(item.id)
+
+    storedItem = await Ingredient.findById(item.id).exec();
+
+    expect(storedItem).toBeNull();
+  });
+
+  test('should return Ingredient items by passed params', async () => {
+    await IngredientService.create(mockIngredient);
+    await IngredientService.create(mockIngredient);
+
+    const searchData = await IngredientService.search();
+
+    expect(searchData).toHaveLength(2);
   });
 })
