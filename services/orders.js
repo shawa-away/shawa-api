@@ -3,9 +3,10 @@ const { Order, ORDER_STATUS } = require('../models/order');
 const Ingredient = require('../models/ingredient');
 
 const emptySort = data => data;
+const timeSortFn = items => items.slice().sort((a, b) => a.time - b.time);
 
 const ordersService = {
-  search: (params = {}, isPopulated = false, sortFn = emptySort) => new Promise((resolve, reject) => {
+  search: (params = {}, isPopulated = false, sortFn = emptySort) => {
     const { status, place, user, id, _id } = params;
     let query = {};
     if (status) query.status = status;
@@ -13,73 +14,63 @@ const ordersService = {
     if (user) query.user = user;
     if (id || _id) query._id = id || _id;
 
-    Order
+    return Order
       .find(query)
       .populate(isPopulated ? 'place' : null)
       .populate(isPopulated ? 'kebabs.ingredients' : null)
       .populate(isPopulated ? 'cook' : null)
-      .exec((err, orders) => {
-        if (err) return reject(err);
+      .exec()
+      .then(orders => sortFn(orders));
+  },
 
-        resolve(sortFn(orders))
-      });
-  }),
+  searchNextOrder: place => ordersService
+    .search({ place }, true)
+    .then(orders => timeSortFn(orders))
+    .then(orders => orders.length ? orders[0] : null),
 
-  create: (data) => new Promise((resolve, reject) => {
-    if (!data.kebabs || !data.kebabs.length) return reject(new Error('missing Data'))
+  create: data => {
+    if (!data.kebabs || !data.kebabs.length) {
+      return Promise.reject(new Error('missing Data'))
+    };
 
-    const promises = data.kebabs.map(kebab => {
-      return new Promise((resolve, reject) => {
-        Ingredient.find({
+    const ingredients = data.kebabs.map(
+      kebab => Ingredient
+        .find({
           "_id": { $in: kebab.ingredients.map(ingredientId => mongoose.Types.ObjectId(ingredientId)) }
-        }, (err, ingredients) => {
-          if (err) {
-            return reject(err);
-          }
-
-          resolve(ingredients)
         })
+        .exec()
+    );
+
+    return Promise.all(ingredients)
+      .then((kebabsIngredients) => {
+        return kebabsIngredients.reduce((price, kebabIngredients) =>
+          price + kebabIngredients.reduce((sum, ingredientsObj) => sum + ingredientsObj.price, 0),
+          0);
       })
-    });
+      .then(price => new Order({ ...data, price, status: ORDER_STATUS.TODO }))
+      .then(order => order
+        .save()
+        .then(order =>
+          order
+            .populate('place kebabs.ingredients')
+            .execPopulate()
+        )
+      );
+  },
 
-    Promise.all(promises).then((kebabsIngredients) => {
-      const price = kebabsIngredients.reduce((price, kebabIngredients) =>
-        price + kebabIngredients.reduce((sum, ingredientsObj) => sum + ingredientsObj.price, 0),
-        0)
-
-      const order = new Order({ ...data, price, status: ORDER_STATUS.TODO });
-
-      order.save((err, order) => {
-        if (err) return reject(err)
-
-        order.populate('place kebabs.ingredients cook', (err, order) => resolve(order));
-      })
-    })
-  }),
-
-  update: (id, data) => new Promise((resolve, reject) => {
-    Order.findById(id, (err, order) => {
-      if (err) return reject(err)
-
+  update: (id, data) => Order
+    .findById(id)
+    .exec()
+    .then(order => {
       for (key in data) {
         order[key] = data[key];
       }
 
-      order.save((err, order) => {
-        if (err) return reject(err)
-
-        order.populate('place kebabs.ingredients cook', (err, order) => resolve(order));
-      })
+      return order.save();
     })
-  }),
+    .then(order => order.populate('place kebabs.ingredients cook').execPopulate()),
 
-  remove: (id) => new Promise((resolve, reject) => {
-    Order.findByIdAndDelete(id, (err, order) => {
-      if (err) return reject(err);
-
-      resolve(order);
-    })
-  })
+  remove: (id) => Order.findByIdAndDelete(id).exec()
 }
 
 

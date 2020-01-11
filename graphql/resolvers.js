@@ -21,12 +21,7 @@ module.exports = {
     places: (root, params) => PlaceService.search(),
     users: (root, params) => UserService.search(params),
     orders: (root, { isPopulated = true, sortFn, ...params }) => OrderService.search(params, isPopulated, sortFn),
-    nextOrder: (root, { isPopulated = true, place }) => {
-      const sortFn = orders => orders.slice().sort((a, b) => a.time - b.time);
-      return OrderService
-        .search({ place, status: ORDER_STATUS.TODO }, isPopulated, sortFn)
-        .then(orders => orders.length ? orders[0] : {});
-    }
+    nextOrder: (root, { place }) => OrderService.searchNextOrder(place)
   },
   Mutation: {
     // Ingredients
