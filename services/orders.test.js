@@ -1,7 +1,8 @@
 const OrdersService = require('./orders');
 const PlacesService = require('./places');
+const UsersService = require('./users');
 const IngredientsService = require('./ingredients');
-const { Order } = require('../models/order');
+const { Order, ORDER_STATUS } = require('../models/order');
 const DBTestHelper = require('./../tests/helpers/connection');
 
 // Register models that need to populate
@@ -11,8 +12,8 @@ require('../models/ingredient');
 
 const getIngredientIds = ingredients => ingredients.map(ingredient => ingredient.id);
 
-const getMockOrder = ({ ingredients, placeId }) => ({
-  time: "1578301462899",
+const getMockOrder = ({ ingredients, placeId, time = "1578301462899" }) => ({
+  time,
   kebabs: [
     { ingredients: getIngredientIds(ingredients) },
     { ingredients: getIngredientIds(ingredients) },
@@ -21,6 +22,8 @@ const getMockOrder = ({ ingredients, placeId }) => ({
   phone: "123-45-32",
   place: placeId
 });
+
+const getMockUser = placeId => ({ name: 'user', type: 'cook', password: 'password', login: 'test', place: placeId });
 
 describe('Orders service', () => {
   beforeAll(DBTestHelper.connect);
@@ -116,7 +119,7 @@ describe('Orders service', () => {
     await OrdersService.create(getMockOrder({ ingredients, placeId: place.id }));
     await OrdersService.create(getMockOrder({ ingredients, placeId: anotherPlace.id }));
 
-    const searchData = await OrdersService.search({place: anotherPlace.id}, true);
+    const searchData = await OrdersService.search({ place: anotherPlace.id }, true);
 
     expect(searchData).toHaveLength(1);
     expect(searchData[0].place.id).toBe(anotherPlace.id);
@@ -126,17 +129,46 @@ describe('Orders service', () => {
     await OrdersService.create(getMockOrder({ ingredients, placeId: place.id }));
     const order = await OrdersService.create(getMockOrder({ ingredients, placeId: place.id }));
 
-    const searchData = await OrdersService.search({id: order.id}, true);
+    const searchData = await OrdersService.search({ id: order.id }, true);
 
     expect(searchData).toHaveLength(1);
     expect(searchData[0].id).toBe(order.id);
   });
 
-  xtest('should return next Order', () => {
-    OrdersService.searchNextOrder()
+  test('should return next Order only in todo status', async () => {
+    await OrdersService.create(getMockOrder({ ingredients, placeId: place.id }));
+    const item2 = await OrdersService.create(getMockOrder({ ingredients, placeId: place.id, time: "1578301462890" }));
+    const nextOrder = await OrdersService.searchNextOrder(place.id);
+
+    expect(nextOrder.id).toBe(item2.id);
   });
 
-  xtest('should return error if next Order called w/o place', () => {
+  test('should return next Order only in todo status', async () => {
+    const item = await OrdersService.create(getMockOrder({ ingredients, placeId: place.id }));
+    const item2 = await OrdersService.create(getMockOrder({ ingredients, placeId: place.id, time: "1578301462890" }));
+    const cook = await UsersService.create(getMockUser(place.id));
+
+    await OrdersService.update(item2.id, { status: ORDER_STATUS.IN_PROGRESS, cook: cook.id });
+
+    const nextOrder = await OrdersService.searchNextOrder(place.id);
+
+    expect(nextOrder.id).toBe(item.id);
+  });
+
+  test('should return null if next Order not exist', async () => {
+    const item = await OrdersService.create(getMockOrder({ ingredients, placeId: place.id }));
+    const item2 = await OrdersService.create(getMockOrder({ ingredients, placeId: place.id, time: "1578301462890" }));
+    const cook = await UsersService.create(getMockUser(place.id));
+
+    await OrdersService.update(item.id, { status: ORDER_STATUS.IN_PROGRESS, cook: cook.id });
+    await OrdersService.update(item2.id, { status: ORDER_STATUS.IN_PROGRESS, cook: cook.id });
+
+    const nextOrder = await OrdersService.searchNextOrder(place.id);
+
+    expect(nextOrder).toBeNull();
+  });
+
+  test('should return error if next Order called w/o place', () => {
     return expect(OrdersService.searchNextOrder()).rejects.toThrow('missing Place');
   });
 })

@@ -23,10 +23,16 @@ const ordersService = {
       .then(orders => sortFn(orders));
   },
 
-  searchNextOrder: place => ordersService
-    .search({ place }, true)
-    .then(orders => timeSortFn(orders))
-    .then(orders => orders.length ? orders[0] : null),
+  searchNextOrder: place => {
+    if (!place) {
+      return Promise.reject(new Error('missing Place'));
+    }
+
+    return ordersService
+      .search({ place, status: ORDER_STATUS.TODO }, true)
+      .then(orders => timeSortFn(orders))
+      .then(orders => orders.length ? orders[0] : null)
+  },
 
   create: data => {
     if (!data.kebabs || !data.kebabs.length) {
