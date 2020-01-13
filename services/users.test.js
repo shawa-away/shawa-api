@@ -1,6 +1,6 @@
 const UsersService = require('./users');
 const PlacesService = require('./places');
-const User = require('../models/user');
+const { User } = require('../models/user');
 const DBTestHelper = require('./../tests/helpers/connection');
 
 // Register Place model

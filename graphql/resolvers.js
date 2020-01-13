@@ -2,19 +2,20 @@ const IngredientService = require('./../services/ingredients');
 const PlaceService = require('./../services/places');
 const UserService = require('./../services/users');
 const OrderService = require('./../services/orders');
+const { USER_TYPE } = require('./../models/user');
 const { ORDER_STATUS } = require('./../models/order');
 
 module.exports = {
   UserType: {
-    COOK: 'cook',
-    ADMIN: 'admin',
-    SUPER: 'super'
+    COOK: USER_TYPE.COOK,
+    ADMIN: USER_TYPE.ADMIN,
+    SUPER: USER_TYPE.SUPER
   },
   OrderType: {
-    TODO: 'todo',
-    IN_PROGRESS: 'inprogress',
-    DONE: 'done',
-    FINISHED: 'finished',
+    TODO: ORDER_STATUS.TODO,
+    IN_PROGRESS: ORDER_STATUS.IN_PROGRESS,
+    DONE: ORDER_STATUS.DONE,
+    FINISHED: ORDER_STATUS.FINISHED,
   },
   Query: {
     ingredients: (root, params) => IngredientService.search(),

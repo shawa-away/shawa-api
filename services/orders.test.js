@@ -81,6 +81,18 @@ describe('Orders service', () => {
     expect(item.kebabs[0].ingredients).toHaveLength(2);
   });
 
+  test('should update Order to DONE status and set done time', async () => {
+    const doneTime = 1578301462890;
+    const item = await OrdersService.create(getMockOrder({ ingredients, placeId: place.id }));
+    jest.spyOn(Date, 'now').mockImplementation(() => doneTime);
+
+    await OrdersService.update(item.id, { status: ORDER_STATUS.DONE, cook: "5e04773e2894674b2ae74fe4" })
+
+    const updatedItem = await Order.findById(item.id).exec();
+
+    expect(updatedItem.doneTime).toEqual(new Date(doneTime));
+  });
+
   test('should remove Order from DB', async () => {
     const item = await OrdersService.create(getMockOrder({ ingredients, placeId: place.id }));
     let storedItem = await Order.findById(item.id).exec();

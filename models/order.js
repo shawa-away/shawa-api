@@ -37,12 +37,18 @@ const orderSchema = new Schema({
   },
   cook: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   doneTime: {
-    type: String,
+    type: Date,
   },
   comments: String
 }, { timestamps: true });
 
 orderSchema.pre('save', function (next) {
+
+  if (!this.kebabs || (this.kebabs && this.kebabs.length === 0)
+    || this.kebabs.some(kebabs => kebabs.ingredients && kebabs.ingredients.length === 0)) {
+    return next(new Error('Kebabs should be not empty in order'));
+  }
+
   if (this.status !== ORDER_STATUS.TODO && !this.cook) {
     // const error = new ValidationError(this);
     // error.errors.cook = new ValidatorError({

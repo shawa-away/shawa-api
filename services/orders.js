@@ -72,6 +72,10 @@ const ordersService = {
         order[key] = data[key];
       }
 
+      if (data.status === ORDER_STATUS.DONE && !order.doneTime) {
+        order.doneTime = Date.now();
+      }
+
       return order.save();
     })
     .then(order => order.populate('place kebabs.ingredients cook').execPopulate()),

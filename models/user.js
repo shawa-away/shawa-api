@@ -1,6 +1,12 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
+const USER_TYPE = {
+  COOK: 'cook',
+  ADMIN: 'admin',
+  SUPER: 'super',
+};
+
 const userSchema = new Schema({
   name: {
     type: String,
@@ -8,7 +14,7 @@ const userSchema = new Schema({
   },
   type: {
     type: String,
-    enum: ['cook', 'admin', 'super'],
+    enum: [USER_TYPE.COOK, USER_TYPE.ADMIN, USER_TYPE.SUPER],
     required: true,
   },
   password: {
@@ -25,4 +31,7 @@ const userSchema = new Schema({
 
 const User = mongoose.model('User', userSchema);
 
-module.exports = User;
+module.exports = {
+  User,
+  USER_TYPE
+};
